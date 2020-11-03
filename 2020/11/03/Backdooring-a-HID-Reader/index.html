@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>Backdooring a HID Reader | Silas Cutler</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="A while back, I bought a HID Prox Pro II on eBay for some long-forgotten experiment — likely this. Outside of being well documented and cheaply available, @shakataganai wrote a fantastic article about">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Backdooring a HID Reader">
+<meta property="og:url" content="https://silascutler.com/2020/11/03/Backdooring-a-HID-Reader/index.html">
+<meta property="og:site_name" content="Silas Cutler">
+<meta property="og:description" content="A while back, I bought a HID Prox Pro II on eBay for some long-forgotten experiment — likely this. Outside of being well documented and cheaply available, @shakataganai wrote a fantastic article about">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://silascutler.com/uploads/0*bHzHy2sHYVywzMZM.jpg">
+<meta property="og:image" content="https://silascutler.com/uploads/1*AmxtYvKBO0nUKCcV3tIviQ.png">
+<meta property="og:image" content="https://silascutler.com/uploads/1*kYxp2um0YDmjI3D_dSQsBg.png">
+<meta property="og:image" content="https://silascutler.com/uploads/1*tGuHUxsiGSce_kWV_VH_HA.png">
+<meta property="og:image" content="https://silascutler.com/uploads/1*AwSHdI2odYiNHhYrZ_zaqA.png">
+<meta property="og:image" content="https://silascutler.com/uploads/1*E9BdKzeuubHe987xBCMRPg.png">
+<meta property="og:image" content="https://silascutler.com/uploads/1*N-ixJQaLMhVLrf4KgQzzwQ.png">
+<meta property="article:published_time" content="2020-11-03T07:16:58.000Z">
+<meta property="article:modified_time" content="2020-11-03T07:24:33.997Z">
+<meta property="article:author" content="Silas Cutler">
+<meta property="article:tag" content="Silas Cutler">
+<meta property="article:tag" content="silascutler">
+<meta property="article:tag" content="p1nk">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://silascutler.com/uploads/0*bHzHy2sHYVywzMZM.jpg">
+  
+    <link rel="alternate" href="/atom.xml" title="Silas Cutler" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 5.2.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Silas Cutler</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/talks">Talks</a>
+        
+          <a class="main-nav-link" href="/published">Published</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/contact">Contact</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://silascutler.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Backdooring-a-HID-Reader" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2020/11/03/Backdooring-a-HID-Reader/" class="article-date">
+  <time datetime="2020-11-03T07:16:58.000Z" itemprop="datePublished">2020-11-03</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Backdooring a HID Reader
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>A while back, I bought a <a target="_blank" rel="noopener" href="https://www.hidglobal.com/products/readers/hid-proximity/5455">HID Prox Pro II</a> on eBay for some long-forgotten experiment — likely <a target="_blank" rel="noopener" href="https://hackaday.com/2013/11/03/rfid-reader-snoops-cards-from-3-feet-away/">this</a>. Outside of being <a target="_blank" rel="noopener" href="https://www.hidglobal.com/doclib/files/resource_files/5355a-900-n.3-proxpro-wiegnad-clock-and-data-install-guide-en.pdf">well documented</a> and <a target="_blank" rel="noopener" href="https://www.ebay.com/sch/i.html?_from=R40&_nkw=HID+Prox+Pro+reader&_sacat=0&LH_TitleDesc=0&_sop=15">cheaply available</a>, @shakataganai wrote a fantastic <a target="_blank" rel="noopener" href="https://obviate.io/2016/11/23/connecting-a-hid-prox-pro-ii-rfid-reader-to-arduino/">article</a> about how to connect it to an Arduino, which makes it ideal for some testing.</p>
+<p><img src="/uploads/0*bHzHy2sHYVywzMZM.jpg" alt="HID Prox Pro II"></p>
+<p>While exploring the device, I was disappointed that the actual components of the device (except the antenna) were sealed under some type of resin coating. Despite the components being inaccessible, I noticed there was a lot of available space inside…Big enough to fit an entire <a target="_blank" rel="noopener" href="https://github.com/Proxmark/proxmark3">Proxmark3</a>. So — theoretically, it <a target="_blank" rel="noopener" href="https://twitter.com/silascutler/status/1133723910413934592">may</a> be possible to install a device inside this empty space that could capture tag data whenever someone swipes.</p>
+<p><img src="/uploads/1*AmxtYvKBO0nUKCcV3tIviQ.png" alt="Interior of HID reader"></p>
+<p><img src="/uploads/1*kYxp2um0YDmjI3D_dSQsBg.png" alt="Proxmark3 sitting inside"></p>
+<p>Feedback from folks on Twitter noted the potential for interference between the two devices — which makes sense, if the HID card reader is emitting a signal to power a card, a second device in close proximity could cause a problem.</p>
+<p><img src="/uploads/1*tGuHUxsiGSce_kWV_VH_HA.png" alt="Reply from Iceman"></p>
+<p>The argument is sound, I’d previously experimented with an <a target="_blank" rel="noopener" href="https://itw01.com/QFUJAEK.html">Anti-NFC</a> card from CN360’s Unicorn team, which <a target="_blank" rel="noopener" href="https://twitter.com/silascutler/status/912448923310149632">emits a signal to jam communication</a> between a <a target="_blank" rel="noopener" href="https://twitter.com/silascutler/status/912445743008555009">reader and a tag</a>.</p>
+<p><img src="/uploads/1*AwSHdI2odYiNHhYrZ_zaqA.png"></p>
+<p>A possible way to get around this came from <a target="_blank" rel="noopener" href="https://twitter.com/NotMedic">NotMedic</a> and <a target="_blank" rel="noopener" href="https://twitter.com/herrmann1001">iceman</a> was to possibly wire the Proxmark to the device’s physical antenna.<br>From looking at the inside of the HID device, it wouldn’t be terribly hard to solder a lead to the exposed antenna connection — using an alligator clip may be faster.</p>
+<p><img src="/uploads/1*E9BdKzeuubHe987xBCMRPg.png" alt="Antenna connection"></p>
+<p>However, I wasn’t feeling bold enough to go that route, and opted to use the stock antenna and test things out. From the Proxmark client, I was able to verify readability of my testing tag/card.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">proxmark3&gt; lf search</span><br><span class="line">NOTE: some demods output possible binary</span><br><span class="line">  if it finds something that looks like a tag          </span><br><span class="line">False Positives ARE possible</span><br><span class="line">Checking for known tags:</span><br><span class="line">          </span><br><span class="line">HID Prox TAG ID: 2e6277a2df          </span><br><span class="line">--------------------------------------------------          </span><br><span class="line">       Format: C1k35s (HID Corporate 1000 35-bit standard layout)          </span><br><span class="line">Facility Code: 787          </span><br><span class="line">  Card Number: 774511          </span><br><span class="line">       Parity: Valid          </span><br><span class="line">--------------------------------------------------</span><br><span class="line">Valid HID Prox ID Found!</span><br><span class="line">Using lf snoop, the device will eavesdrop in on the tag reads from the HID reader:</span><br><span class="line">proxmark3&gt; lf snoop</span><br><span class="line">proxmark3&gt; data sample</span><br><span class="line">Reading 39999 bytes from device memory</span><br><span class="line">Data fetched</span><br><span class="line">Samples @ 8 bits&#x2F;smpl, decimation 1:1</span><br><span class="line">proxmark3&gt; data plot</span><br></pre></td></tr></table></figure>
+<p><img src="/uploads/1*N-ixJQaLMhVLrf4KgQzzwQ.png" alt="Plotted"></p>
+<h3 id="Practicality"><a href="#Practicality" class="headerlink" title="Practicality"></a>Practicality</h3><p>While a nifty trick there are some practicalities that make conducting this a challenge:<br>Tamper sensors — as <a target="_blank" rel="noopener" href="https://twitter.com/mdhardeman/status/1133759460487454721">mdhardeman pointed out</a> many HID readers have either optical or switch based tamper sensors to alert if someone attempts this.<br>Space &amp; Power— While Proxmark fits, I needed to run a USB cable out the back for power/comms, which was tricky. Use in the field may be better using something like a <a target="_blank" rel="noopener" href="https://github.com/rfidtool/ESP-RFID-Tool">ESP-RFID-Tool</a>, as pointed out by <a target="_blank" rel="noopener" href="https://twitter.com/jermainlaforce">jermainlaforce</a>. Despite the <a target="_blank" rel="noopener" href="https://github.com/rfidtool/ESP-RFID-Tool">ESP-RFID-Tool</a> having a smaller footprint, it uses wifi — which unless carefully planned, could lead to having to physically be close to the backdoored HID reader.</p>
+<p>(Post migrated from Medium - <a target="_blank" rel="noopener" href="https://medium.com/emptyregisters/backdooring-a-hid-reader-22a9cc9bd92b">https://medium.com/emptyregisters/backdooring-a-hid-reader-22a9cc9bd92b</a> )</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://silascutler.com/2020/11/03/Backdooring-a-HID-Reader/" data-id="ckh1ndg6x0001p2gw341ehiql" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2020/11/03/Backdooring-a-HID-Reader/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (no title)
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2020/11/03/Fresh-PlugX-October-2019/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Fresh PlugX October 2019</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">November 2020</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/11/03/Backdooring-a-HID-Reader/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2020/11/03/Backdooring-a-HID-Reader/">Backdooring a HID Reader</a>
+          </li>
+        
+          <li>
+            <a href="/2020/11/03/Fresh-PlugX-October-2019/">Fresh PlugX October 2019</a>
+          </li>
+        
+          <li>
+            <a href="/2020/11/03/Lazarus-obfuscation-in-Feb-2019/">Lazarus obfuscation in Feb 2019</a>
+          </li>
+        
+          <li>
+            <a href="/2020/11/03/Finding-the-same-bugs-in-all-the-familiar-places/">Finding the same bugs in all the familiar places</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 Silas Cutler<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/talks" class="mobile-nav-link">Talks</a>
+  
+    <a href="/published" class="mobile-nav-link">Published</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/contact" class="mobile-nav-link">Contact</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>Finding the same bugs in all the familiar places | Silas Cutler</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="(Migrated Post)A while back, I had a patch of cases where I was regularly looking at samples leveraging DLL Side loading (also called Search Order Hijacking) as part of their setup phase.  This vulner">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Finding the same bugs in all the familiar places">
+<meta property="og:url" content="https://silascutler.com/2020/11/03/Finding-the-same-bugs-in-all-the-familiar-places/index.html">
+<meta property="og:site_name" content="Silas Cutler">
+<meta property="og:description" content="(Migrated Post)A while back, I had a patch of cases where I was regularly looking at samples leveraging DLL Side loading (also called Search Order Hijacking) as part of their setup phase.  This vulner">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://silascutler.com/uploads/Finding-the-same-bugs-in-all-the-familiar-places.soh.png">
+<meta property="og:image" content="https://silascutler.com/uploads/Finding-the-same-bugs-in-all-the-familiar-places.calc_open.png">
+<meta property="og:image" content="https://silascutler.com/uploads/Finding-the-same-bugs-in-all-the-familiar-places.sofria.png">
+<meta property="og:image" content="https://silascutler.com/uploads/Finding-the-same-bugs-in-all-the-familiar-places.procmon.png">
+<meta property="og:image" content="https://silascutler.com/uploads/Finding-the-same-bugs-in-all-the-familiar-places.calc_waterfall.png">
+<meta property="article:published_time" content="2020-11-03T06:49:47.000Z">
+<meta property="article:modified_time" content="2020-11-03T07:17:14.116Z">
+<meta property="article:author" content="Silas Cutler">
+<meta property="article:tag" content="Silas Cutler">
+<meta property="article:tag" content="silascutler">
+<meta property="article:tag" content="p1nk">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://silascutler.com/uploads/Finding-the-same-bugs-in-all-the-familiar-places.soh.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Silas Cutler" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 5.2.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Silas Cutler</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/talks">Talks</a>
+        
+          <a class="main-nav-link" href="/published">Published</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/contact">Contact</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://silascutler.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Finding-the-same-bugs-in-all-the-familiar-places" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2020/11/03/Finding-the-same-bugs-in-all-the-familiar-places/" class="article-date">
+  <time datetime="2020-11-03T06:49:47.000Z" itemprop="datePublished">2020-11-03</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Finding the same bugs in all the familiar places
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h3 id="Migrated-Post"><a href="#Migrated-Post" class="headerlink" title="(Migrated Post)"></a>(Migrated Post)</h3><p>A while back, I had a patch of cases where I was regularly looking at samples leveraging DLL Side loading (also called <code>Search Order Hijacking</code>) as part of their setup phase.  This vulnerability exists because of how Windows handles resolving libraries for applications and can be exploited to cause an application to inadvertently load (at the same privilege level) a malicious library.  When a library is<br>loaded by an application (either delayed or at execution), Windows will check the following locations<br> in order for a copy of the library:</p>
+<p><img src="/uploads/Finding-the-same-bugs-in-all-the-familiar-places.soh.png" alt="https://docs.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-search-order"></p>
+<p>The above shows the locations checked when SafeDllSearchMode is disabled.  When enabled, the current directory is checked fifth, instead of second.  </p>
+<p>This process can be exploited when a malicious library is added to one of these locations - before<br>the actual library natively resides.  For example, if <code>MyApp.exe</code> is attempting to load <code>TestLib.dll</code>,<br>which is located in SYSTEM32 (location #3 above) and an attacker deploys a malicious copy to the current working directory<br> (#2 above) - the malicious copy will be loaded, instead of the native copy.  </p>
+<p>Exploitation of this technique in the wild has been commonly used by attackers for mainly:</p>
+<ul>
+<li>Initial access deployment - <em>In observed cases, a vulnerable legitimate and signed executable is bundled with a malicious<br>library and obfuscated payload inside of a Self-Extracting (SFX) RAR Archive.</em> </li>
+<li>System persistence - <em>Attackers install a malicious library to the same folder as a vulnerable application that is<br>regularly executed or run as a system service</em></li>
+</ul>
+<p>Some have argued that DLL Side loading is an Antivirus (AV) vulnerability - based on the<br>assumption /  that detection engines only look at the parent process and make a determination<br>based on that.  While that may be the case for some AV products (and of those from 2005), the<br>vulnerability can be exploited for tactical uses, beyond a detection bypass.  In addition to being<br>usable for persistence, because the side loaded libraries are run at the same privilege level as<br>the associated process, if loaded by a system services, it would be possible to escalate to<br>SYSTEM level. </p>
+<p><img src="/uploads/Finding-the-same-bugs-in-all-the-familiar-places.calc_open.png" alt="Calc.exe opened by maliciously library loaded by vulnerable application"></p>
+<p>Following are two interesting applications I found that were vulnerable to DLL Side loading that<br>have finished the notification process and some analytical assessments of each:</p>
+<h3 id="Dell-Power-Management-Packages"><a href="#Dell-Power-Management-Packages" class="headerlink" title="Dell Power Management Packages"></a>Dell Power Management Packages</h3><p>While rebuilding a bare-metal sandbox, I ran the Dell Power Management Service Updater ( <code>Dell-Power-Manager-Service_XJ50Y_WIN64_3.0.0_A00.EXE</code> / SHA256 Hash<br><code>62dcd3ba9a005255a651dfb601405a6258312cbcd1bdf63489f65837b212601a</code>) through<br><a target="_blank" rel="noopener" href="https://github.com/Cybereason/siofra">Siofra</a> as a cursory check.  </p>
+<p>Following is the output from this check:</p>
+<p><img src="/uploads/Finding-the-same-bugs-in-all-the-familiar-places.sofria.png" alt="Output"></p>
+<p>From the output, six of the dependencies of this installer were flagged as vulnerable.  Using<br>Process Monitor when the installer was executed (from <code>C:\Users\User\Desktop\</code>), the highlighted lines show the installer first attempting to open VERSION.dll from the same directory as the installer, before then moving on to SYSTEM32 - showing that the installer was highly-likely vulnerable.</p>
+<p><img src="/uploads/Finding-the-same-bugs-in-all-the-familiar-places.procmon.png" alt="Output"></p>
+<p>In order to confirm fully this vulnerability, a PoC malicious library was written in Visual Studio with<br> the same exports as VERSION.dll linked to the original library. The main components of this<br> are DllMain, which contains a switch statement with a WinExec call to open calc.exe<br>whenever the library is loaded (shown first), and the links to the original library exports<br> (shown second):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">BOOL APIENTRY DllMain( HMODULE hModule,</span><br><span class="line">                       DWORD  ul_reason_for_call,</span><br><span class="line">                       LPVOID lpReserved )</span><br><span class="line">&#123;</span><br><span class="line"> switch (ul_reason_for_call)</span><br><span class="line"> &#123;</span><br><span class="line">  case DLL_PROCESS_ATTACH:</span><br><span class="line">  &#123;</span><br><span class="line">   WinExec(&quot;c:\\windows\\system32\\calc.exe&quot;, SW_SHOW);</span><br><span class="line">  &#125;</span><br><span class="line">  case DLL_THREAD_ATTACH:</span><br><span class="line">  &#123;</span><br><span class="line">   WinExec(&quot;c:\\windows\\system32\\calc.exe&quot;, SW_SHOW);</span><br><span class="line">  &#125;</span><br><span class="line"> &#125;</span><br><span class="line"> return TRUE;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#pragma comment(linker, &quot;&#x2F;export:GetFileVersionInfoA&#x3D;C:&#x2F;Windows&#x2F;System32&#x2F;version.GetFileVersionInfoA&quot;)</span><br></pre></td></tr></table></figure>
+
+<p>The result of this is a beautiful waterfall of calc when the installer is loaded:</p>
+<p><img src="/uploads/Finding-the-same-bugs-in-all-the-familiar-places.calc_waterfall.png" alt="Output"></p>
+<p>What makes this case interesting is that the vulnerable application is installed by default on some new Dell systems.  For an attacker, this type of vulnerability could be trivially leveraged for persistence - given the large-installation base.   </p>
+<p>Notification Timeline:</p>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Event</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2018 May  9</td>
+<td>Reported to Dell</td>
+</tr>
+<tr>
+<td>2018 May  9</td>
+<td>Dell acknowledge receipt</td>
+</tr>
+<tr>
+<td>2018 May 15</td>
+<td>Dell re-acknowledge receipt</td>
+</tr>
+<tr>
+<td>2019 May 20</td>
+<td>Dell provides update stating review is in final review and release coming soon</td>
+</tr>
+<tr>
+<td>2019 June 3</td>
+<td>Dell provides update that another researcher has submitted additional information related to original vulnerability</td>
+</tr>
+<tr>
+<td>2019 September 1</td>
+<td>I Requested status update</td>
+</tr>
+<tr>
+<td>2019 September 4</td>
+<td>Dell states the review is in final review and update coming next week</td>
+</tr>
+<tr>
+<td>2019 September 12</td>
+<td>Dell publishes Security Advisory (DSA-2019-065 / CVE-2019-3726)</td>
+</tr>
+</tbody></table>
+<h3 id="Windows-10-OpenSSH-Client"><a href="#Windows-10-OpenSSH-Client" class="headerlink" title="Windows 10 OpenSSH Client"></a>Windows 10 OpenSSH Client</h3><p>While preparing for the 2019 Northeast Collegiate Cyber Defense Competition (NECCDC) I<br> found that several of the executable files (listed below) for OpenSSH for Windows (version <code>7.6.0.0</code>)<br>were also vulnerable to DLL Side loading, using the same method of identification with Siofra,<br>validation with ProcessMonitor and validation with a PoC.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">C:\Windows\System32\OpenSSH\scp.exe</span><br><span class="line">C:\Windows\System32\OpenSSH\sftp.exe</span><br><span class="line">C:\Windows\System32\OpenSSH\ssh-add.exe</span><br><span class="line">C:\Windows\System32\OpenSSH\ssh-agent.exe</span><br><span class="line">C:\Windows\System32\OpenSSH\ssh-keygen.exe</span><br><span class="line">C:\Windows\System32\OpenSSH\ssh-keyscan.exe</span><br><span class="line">C:\Windows\System32\OpenSSH\ssh.exe </span><br></pre></td></tr></table></figure>
+
+<p>In each of the vulnerable executable files, the following libraries could be used for exploitation:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">bcrypt.dll</span><br><span class="line">logoncli.dll</span><br><span class="line">netutils.dll</span><br><span class="line">ntmarta.dll</span><br><span class="line">samcli.dll</span><br><span class="line">SspiCli.dll</span><br><span class="line">wkscli.dll</span><br></pre></td></tr></table></figure>
+<p>Unlike the previous case, this vulnerability is inherently interesting because of the large base of potentially vulnerable systems.  However, this vulnerability impacting OpenSSH allows for a number of theoretically possible attacks, that may not applicable to large-scale usage, but may be of high value in a targeted attack scenario.</p>
+<p>Notification Timeline:</p>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Event</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2019 March 11</td>
+<td>Reported to Microsoft MSRC</td>
+</tr>
+<tr>
+<td>2019 March 11</td>
+<td>Received automated acknowledgement</td>
+</tr>
+<tr>
+<td>2019 March 20</td>
+<td>Received acknowledgement report was being reviewed</td>
+</tr>
+<tr>
+<td>2019 March 28</td>
+<td>Microsoft verified the issue, however determined it does not meet their bar for servicing via a monthly security update.</td>
+</tr>
+</tbody></table>
+<h4 id="Final-Thoughts"><a href="#Final-Thoughts" class="headerlink" title="Final Thoughts"></a>Final Thoughts</h4><p>As exploitation of these vulnerabilities require either existing system access or social engineering,<br>they are by no means the most critical out there.  However, I feel @n0x00 described it best in a<br>GitHub thread: “it’s the XSS of thick client work”.</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://silascutler.com/2020/11/03/Finding-the-same-bugs-in-all-the-familiar-places/" data-id="ckh1ndg740003p2gwb7xo4jpu" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2020/11/03/Lazarus-obfuscation-in-Feb-2019/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Lazarus obfuscation in Feb 2019
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2020/11/02/init/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">init</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">November 2020</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/11/03/Backdooring-a-HID-Reader/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2020/11/03/Backdooring-a-HID-Reader/">Backdooring a HID Reader</a>
+          </li>
+        
+          <li>
+            <a href="/2020/11/03/Fresh-PlugX-October-2019/">Fresh PlugX October 2019</a>
+          </li>
+        
+          <li>
+            <a href="/2020/11/03/Lazarus-obfuscation-in-Feb-2019/">Lazarus obfuscation in Feb 2019</a>
+          </li>
+        
+          <li>
+            <a href="/2020/11/03/Finding-the-same-bugs-in-all-the-familiar-places/">Finding the same bugs in all the familiar places</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 Silas Cutler<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/talks" class="mobile-nav-link">Talks</a>
+  
+    <a href="/published" class="mobile-nav-link">Published</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/contact" class="mobile-nav-link">Contact</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+  </div>
+</body>
+</html>
