@@ -4,7 +4,7 @@
   
     
     <entry>
-      <title>KilledInTranslation</title>
+      <title>Killed In Translation</title>
       <link href="2021/01/14/KilledInTranslation/"/>
       <url>2021/01/14/KilledInTranslation/</url>
       
@@ -56,13 +56,13 @@
       
         <tags>
             
-            <tag> plugx </tag>
-            
             <tag> malware </tag>
             
-            <tag> china </tag>
-            
             <tag> reversing </tag>
+            
+            <tag> plugx </tag>
+            
+            <tag> china </tag>
             
         </tags>
       
@@ -81,13 +81,13 @@
       
         <tags>
             
-            <tag> malware </tag>
-            
-            <tag> reversing </tag>
-            
             <tag> lazarus </tag>
             
+            <tag> malware </tag>
+            
             <tag> dprk </tag>
+            
+            <tag> reversing </tag>
             
         </tags>
       
