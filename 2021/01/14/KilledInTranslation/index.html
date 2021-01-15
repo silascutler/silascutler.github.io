@@ -5,15 +5,17 @@
   
 
   
-  <title>Archives | Silas Cutler</title>
+  <title>KilledInTranslation | Silas Cutler</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="Website of Silas Cutler, Security Researcher">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Silas Cutler">
-<meta property="og:url" content="https://silascutler.com/archives/index.html">
+  <meta name="description" content="Preface:A director at Google once told me that the larger an organization, the less subtlety is possible in what it says publicly, and even the most carefully postulated assessment, cushioned with sup">
+<meta property="og:type" content="article">
+<meta property="og:title" content="KilledInTranslation">
+<meta property="og:url" content="https://silascutler.com/2021/01/14/KilledInTranslation/index.html">
 <meta property="og:site_name" content="Silas Cutler">
-<meta property="og:description" content="Website of Silas Cutler, Security Researcher">
+<meta property="og:description" content="Preface:A director at Google once told me that the larger an organization, the less subtlety is possible in what it says publicly, and even the most carefully postulated assessment, cushioned with sup">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-01-15T00:06:42.000Z">
+<meta property="article:modified_time" content="2021-01-15T00:08:36.514Z">
 <meta property="article:author" content="Silas Cutler">
 <meta property="article:tag" content="Silas Cutler">
 <meta property="article:tag" content="silascutler">
@@ -73,145 +75,60 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-  
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2021" class="archive-year">2021</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2021/01/14/KilledInTranslation/" class="archive-article-date">
-  <time datetime="2021-01-15T00:06:42.000Z" itemprop="datePublished">Jan 14</time>
+        <section id="main"><article id="post-KilledInTranslation" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2021/01/14/KilledInTranslation/" class="article-date">
+  <time datetime="2021-01-15T00:06:42.000Z" itemprop="datePublished">2021-01-14</time>
 </a>
-      
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2021/01/14/KilledInTranslation/">KilledInTranslation</a>
+    <h1 class="article-title" itemprop="name">
+      KilledInTranslation
     </h1>
   
 
-    </header>
-  </div>
-</article>
-  
+      </header>
     
-    
+    <div class="article-entry" itemprop="articleBody">
       
-        </div></section>
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2020" class="archive-year">2020</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2020/11/03/Backdooring-a-HID-Reader/" class="archive-article-date">
-  <time datetime="2020-11-03T07:16:58.000Z" itemprop="datePublished">Nov 3</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/11/03/Backdooring-a-HID-Reader/">Backdooring a HID Reader</a>
-    </h1>
-  
+        <p>Preface:<br>A director at Google once told me that the larger an organization, the less subtlety is possible in what it says publicly, and even the most carefully postulated assessment, cushioned with supporting analytic language, will be interpreted as fact.</p>
+<hr>
+<p>Naming of threat actor groups and malware is a critical aspect to tracking cyber operations. Armchair Researchers, more concerned with social media follower counts, often decry these names as marketing hooks, whereas they are actually complex shibboleths that convey the scope of a set of activity and its sourcing. </p>
+<p>Since roughly 2016, the United States government has been actively working to collaborate with non-government agencies. The National Security Agency (NSA), Cybersecurity and Infrastructure Security Agency (CISA), and the Federal Bureau of Investigation (FBI) have all begun publicly sharing tactical reporting containing technical details, indicators, and defensive recommendations. These reports have become a staple of any major cyber incident because they provide an authoritative situational overview and an initial starting point for collaboration. </p>
+<p>In recent reports[1][2],  attribution has been presented at the forefront of the report and used industry cryptonyms along with military units or specific government entities. While this may be intended to support broader usage (outside of technical consumers), attribution in these reports, without supporting analysis, is creating a dangerous precedent. </p>
+<p>Technical analysis is fundamentally rooted in scientific methodology. When research is presented, a basic requirement is that it is sufficiently detailed to be validated by reproducing the analysis. Within the aforenoted reports, attribution is presented as a statement of fact, similar in confidence to the reported dates or software versions, instead of as a confidence-structured assessment. </p>
+<p>It may be possible the authors of these reports have a Palantír[3], allowing them to perfectly identify the hostile authors, but without proper confidence language and presentation, these assessments are just as likely to have been made by a roll of the dice. </p>
+<p>In future reports, providing context regarding how reported activity links to named sets will provide critical information to existing understanding of these groups. In instances where providing this information may risk sources and methods, limiting assessed attribution to a broad geographic estimate or omitting it entirely may provide a better service. </p>
+<p>[1] <a target="_blank" rel="noopener" href="https://media.defense.gov/2020/May/28/2002306626/-1/-1/0/CSA%20Sandworm%20Actors%20Exploiting%20Vulnerability%20in%20Exim%20Transfer%20Agent%2020200528.pdf">https://media.defense.gov/2020/May/28/2002306626/-1/-1/0/CSA%20Sandworm%20Actors%20Exploiting%20Vulnerability%20in%20Exim%20Transfer%20Agent%2020200528.pdf</a><br>[2] <a target="_blank" rel="noopener" href="https://media.defense.gov/2020/Jul/16/2002457639/-1/-1/0/NCSC_APT29_ADVISORY-QUAD-OFFICIAL-20200709-1810.PDF">https://media.defense.gov/2020/Jul/16/2002457639/-1/-1/0/NCSC_APT29_ADVISORY-QUAD-OFFICIAL-20200709-1810.PDF</a><br>[3] <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Palant%C3%ADr">https://en.wikipedia.org/wiki/Palant%C3%ADr</a></p>
 
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2020/11/03/Fresh-PlugX-October-2019/" class="archive-article-date">
-  <time datetime="2020-11-03T07:13:52.000Z" itemprop="datePublished">Nov 3</time>
-</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/11/03/Fresh-PlugX-October-2019/">Fresh PlugX October 2019</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2020/11/03/Lazarus-obfuscation-in-Feb-2019/" class="archive-article-date">
-  <time datetime="2020-11-03T07:05:13.000Z" itemprop="datePublished">Nov 3</time>
-</a>
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://silascutler.com/2021/01/14/KilledInTranslation/" data-id="ckjxixqbu0008psinfcjzevdr" class="article-share-link">Share</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/11/03/Lazarus-obfuscation-in-Feb-2019/">Lazarus obfuscation in Feb 2019</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2020/11/03/Finding-the-same-bugs-in-all-the-familiar-places/" class="archive-article-date">
-  <time datetime="2020-11-03T06:49:47.000Z" itemprop="datePublished">Nov 3</time>
-</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/11/03/Finding-the-same-bugs-in-all-the-familiar-places/">Finding the same bugs in all the familiar places</a>
-    </h1>
-  
-
-    </header>
+    </footer>
   </div>
-</article>
   
     
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2020/11/02/init/" class="archive-article-date">
-  <time datetime="2020-11-02T15:56:38.000Z" itemprop="datePublished">Nov 2</time>
-</a>
-      
+<nav id="article-nav">
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2020/11/02/init/">init</a>
-    </h1>
   
+    <a href="/2020/11/03/Backdooring-a-HID-Reader/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Backdooring a HID Reader</div>
+    </a>
+  
+</nav>
 
-    </header>
-  </div>
+  
 </article>
-  
-  
-    </div></section>
-  
-
 
 </section>
         

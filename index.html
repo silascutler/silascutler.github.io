@@ -75,10 +75,10 @@
       <div class="outer">
         <section id="main">
   
-    <article id="post-LoveAndHateWithJARM" class="article article-type-post" itemscope itemprop="blogPost">
+    <article id="post-KilledInTranslation" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
-    <a href="/2020/12/10/LoveAndHateWithJARM/" class="article-date">
-  <time datetime="2020-12-10T20:04:26.000Z" itemprop="datePublished">2020-12-10</time>
+    <a href="/2021/01/14/KilledInTranslation/" class="article-date">
+  <time datetime="2021-01-15T00:06:42.000Z" itemprop="datePublished">2021-01-14</time>
 </a>
     
   </div>
@@ -89,7 +89,7 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2020/12/10/LoveAndHateWithJARM/">Love And Hate With JARM</a>
+      <a class="article-title" href="/2021/01/14/KilledInTranslation/">KilledInTranslation</a>
     </h1>
   
 
@@ -97,47 +97,22 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>Before everyone in the US went on holiday for Thanksgiving, I spent some time experimenting with a new tool from Salesforce - JARM.  As described in their <a target="_blank" rel="noopener" href="https://medium.com/m/global-identity?redirectUrl=https://engineering.salesforce.com/easily-identify-malicious-servers-on-the-internet-with-jarm-e095edac525a">blog post</a>: “<strong><em>JARM is an active Transport Layer Security (TLS) server fingerprinting tool</em></strong>“. Despite my initial excitement, it is my current opinion that JARM fingerprints alone are rarely (not always) unique enough to be a reliable method for clustering.  When using JARM hashes, it’s critical to remember that you’re fingerprinting the TLS settings only, not the application or the server.  </p>
-<p>The following section will outline the testing I have done.  </p>
-<p><strong>Experiments</strong></p>
-<p>While Shodan would be the logical place to start (because of their early implemented JARM scanning/searching), I manage to burn through my API limits by 9AM. Instead, I opted to just scan the entire Internet so I could explore the raw data without API limits to constraint my curiosity.</p>
-<p>In the Salesforce blog for JARM, they note it can be used to:</p>
-<ul>
-<li>Quickly verify that all servers in a group have the same TLS configuration.</li>
-<li>Group disparate servers on the internet by configuration, identifying that a server may belong to Google vs. Salesforce vs. Apple, for example.</li>
-<li>Identify default applications or infrastructure.</li>
-<li>Identify malware command and control infrastructure and other malicious servers on the Internet.</li>
-</ul>
-<p>In lieu of proper Scientific Methodology, in which I would create a series of hypotheses and test the validity of each, I opted to break these use cases into how well does JARM do at Clustering and Hunting.</p>
-<p><strong><em>Clustering</em></strong></p>
-<p>With a list of JARM fingerprints for 49.979.246 systems, the first thing I wanted to look at was What are the most common fingerprints.  </p>
-<p>Using a the following commands I carved out a list of the most common hashes</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ zcat 202011-443_fingerprint.json.gz | jq &quot;.data.jarm.result.fingerprint&quot; &gt; fprints</span><br><span class="line">$ cat fprints | sort | uniq -c | sort -nr | head</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">13301177 &quot;00000000000000000000000000000000000000000000000000000000000000&quot;</span><br><span class="line">1949888 &quot;2ad2ad0002ad2ad00042d42d000000d71691dd6844b6fa08f9c5c2b4b882cc&quot;</span><br><span class="line">1583694 &quot;29d29d00029d29d21c29d29d29d29d61178e2295aff621c4f2465a23c4364f&quot;</span><br><span class="line">1446427 &quot;04b02b00004b04b04b04b02b04b04ba4232e18c2cd44d0ef894dd5343a5fc3&quot;</span><br><span class="line">1441429 &quot;2ad2ad0002ad2ad22c2ad2ad2ad2ad2eac92ec34bcc0cf7520e97547f83e81&quot;</span><br><span class="line">1142803 &quot;2ad2ad0002ad2ad22c42d42d00000061cdb625ec378ec3fce160d347caef64&quot;</span><br><span class="line"> 709774 &quot;29d29d00029d29d21c29d29d29d29df87756699516520cdc45e9e59a5a77db&quot;</span><br><span class="line"> 705068 &quot;28d28d28d2ad28d00042d42d000000bd133fde671db50adc016473d0d15112&quot;</span><br><span class="line"> 636780 &quot;29d29d15d29d29d21c29d29d29d29dc80334825071f8ff93376ac14c5a331f&quot;</span><br><span class="line"> 581723 &quot;2ad2ad0002ad2ad0002ad2ad2ad2ad25bc1348abe388f5970a17898163eaa4&quot;</span><br></pre></td></tr></table></figure>
-<p>Skipping the null hash from hosts listening on 443 (but not offering TLS), the two hashes following map to hosts associated with Akamai &amp; Amazon’s Content Delivery Networks (CDN), based on a sampling of the associated hosts and their HTTP server response headers.  Based on these two Amazon and Akamai combined represent just over 7% of the total fingerprints collected.  </p>
-<p>Results from looking at the larger dataset showed good promise.  For an administrator or someone at AWS, I can see JARM being a useful tool for quickly/externally validating matching TLS settings and identifying inconsistencies.   </p>
-<p><strong><em>Hunting</em></strong><br>Initially, I wanted to test the JARM hash of a F5 or some other appliance, but the only thingI had on hand was a Proxmox server.  </p>
-<p>(IP Addrs changed for my privacy)</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">$ python3 jarm.py -v 192.168.1.1 -p 8006</span><br><span class="line">Domain: 192.168.1.1</span><br><span class="line">Resolved IP: 192.168.1.1</span><br><span class="line">JARM: 2ad2ad0002ad2ad00042d42d000000ad9bf51cc3f5a1e29eecb81d0c7b06eb</span><br><span class="line">Scan 1: c030|0303||ff01-0001-000b-0023-0017,</span><br><span class="line">Scan 2: c030|0303||ff01-0001-000b-0023-0017,</span><br><span class="line">Scan 3: |||,</span><br><span class="line">Scan 4: c030|0303||ff01-0001-000b-0023-0017,</span><br><span class="line">Scan 5: c030|0303||ff01-0001-000b-0023-0017,</span><br><span class="line">Scan 6: |||,</span><br><span class="line">Scan 7: 1302|0303||002b-0033,</span><br><span class="line">Scan 8: 1302|0303||002b-0033,</span><br><span class="line">Scan 9: |||,</span><br><span class="line">Scan 10: |||</span><br><span class="line">$ zgrep -i 2ad2ad0002ad2ad00042d42d000000ad9bf51cc3f5a1e29eecb81d0c7b06eb 202011-443_fingerprint.json.gz | wc -l</span><br><span class="line">16268</span><br></pre></td></tr></table></figure>
-<p>16k results. From a cursory review of these hosts, I did not identify any Proxmox servers listening on port 443.  But lets see how it goes when I test against my mail server…</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">$ python3 jarm.py -v 192.168.1.2 -p 465</span><br><span class="line">Domain: 192.168.1.2</span><br><span class="line">Resolved IP: 192.168.1.2</span><br><span class="line">JARM: 07d19d12d21d21d00042d43d000000aa99ce74e2c6d013c745aa52b5cc042d</span><br><span class="line">Scan 1: 0033|0303||ff01-0001-0023-0017,</span><br><span class="line">Scan 2: 00c0|0303||ff01-0001-0023-0017,</span><br><span class="line">Scan 3: 009a|0303||ff01-0001-0023-0017,</span><br><span class="line">Scan 4: c013|0303||ff01-0001-000b-0023-0017,</span><br><span class="line">Scan 5: c013|0303||ff01-0001-000b-0023-0017,</span><br><span class="line">Scan 6: |||,</span><br><span class="line">Scan 7: 1302|0303||002b-0033,</span><br><span class="line">Scan 8: 1303|0303||002b-0033,</span><br><span class="line">Scan 9: |||,</span><br><span class="line">Scan 10: |||</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">$ zgrep -i 07d19d12d21d21d00042d43d000000aa99ce74e2c6d013c745aa52b5cc042d 202011-443_fingerprint.json.gz | wc -l</span><br><span class="line">482</span><br></pre></td></tr></table></figure>
-<p>So, 482 hosts listening on port 443 have the same JARM hash as my mail server.</p>
-<p>As a last test, I wanted to see how <a target="_blank" rel="noopener" href="https://malshare.com/">MalShare.com</a>.</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">$ python3 jarm.py malshare.com</span><br><span class="line">Domain: malshare.com</span><br><span class="line">Resolved IP: 95.217.89.49</span><br><span class="line">JARM: 3fd3fd15d3fd3fd21c42d42d00000060355a74bb9dbae90657ae903145081f</span><br><span class="line"></span><br><span class="line">Domain: malshare.com</span><br><span class="line">Resolved IP: 95.217.89.49</span><br><span class="line">JARM: 3fd3fd15d3fd3fd21c42d42d00000060355a74bb9dbae90657ae903145081f</span><br><span class="line">Scan 1: cca8|0303|http&#x2F;1.1|ff01-0000-0001-000b-0023-0010-0017,</span><br><span class="line">Scan 2: cca8|0303|http&#x2F;1.1|ff01-0000-0001-000b-0023-0010-0017,</span><br><span class="line">Scan 3: 009e|0303|http&#x2F;1.1|ff01-0000-0001-0023-0010-0017,</span><br><span class="line">Scan 4: cca8|0303|http&#x2F;1.1|ff01-0000-0001-000b-0023-0010-0017,</span><br><span class="line">Scan 5: cca8|0303|http&#x2F;1.1|ff01-0000-0001-000b-0023-0010-0017,</span><br><span class="line">Scan 6: c013|0302|http&#x2F;1.1|ff01-0000-0001-000b-0023-0010-0017,</span><br><span class="line">Scan 7: 1302|0303||002b-0033,</span><br><span class="line">Scan 8: 1302|0303||002b-0033,</span><br><span class="line">Scan 9: |||,</span><br><span class="line">Scan 10: |||</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">$ zgrep -i 3fd3fd15d3fd3fd21c42d42d00000060355a74bb9dbae90657ae903145081f 202011-443_fingerprint.json.gz | wc -l</span><br><span class="line">1902</span><br></pre></td></tr></table></figure>
-
-
-<p><strong>Final Thoughts</strong><br>As a stand-alone method for identifying common infrastructure, JARM hashes are an unreliable method.  </p>
-<p>When using JARM, it is critical to remember, you are not fingerprinting the TLS settings - not the end application.  If you are hoping to use JARM to identify malware control servers that have web-based panels, JARM will let you down, except in some rare cases.  </p>
+        <p>Preface:<br>A director at Google once told me that the larger an organization, the less subtlety is possible in what it says publicly, and even the most carefully postulated assessment, cushioned with supporting analytic language, will be interpreted as fact.</p>
+<hr>
+<p>Naming of threat actor groups and malware is a critical aspect to tracking cyber operations. Armchair Researchers, more concerned with social media follower counts, often decry these names as marketing hooks, whereas they are actually complex shibboleths that convey the scope of a set of activity and its sourcing. </p>
+<p>Since roughly 2016, the United States government has been actively working to collaborate with non-government agencies. The National Security Agency (NSA), Cybersecurity and Infrastructure Security Agency (CISA), and the Federal Bureau of Investigation (FBI) have all begun publicly sharing tactical reporting containing technical details, indicators, and defensive recommendations. These reports have become a staple of any major cyber incident because they provide an authoritative situational overview and an initial starting point for collaboration. </p>
+<p>In recent reports[1][2],  attribution has been presented at the forefront of the report and used industry cryptonyms along with military units or specific government entities. While this may be intended to support broader usage (outside of technical consumers), attribution in these reports, without supporting analysis, is creating a dangerous precedent. </p>
+<p>Technical analysis is fundamentally rooted in scientific methodology. When research is presented, a basic requirement is that it is sufficiently detailed to be validated by reproducing the analysis. Within the aforenoted reports, attribution is presented as a statement of fact, similar in confidence to the reported dates or software versions, instead of as a confidence-structured assessment. </p>
+<p>It may be possible the authors of these reports have a Palantír[3], allowing them to perfectly identify the hostile authors, but without proper confidence language and presentation, these assessments are just as likely to have been made by a roll of the dice. </p>
+<p>In future reports, providing context regarding how reported activity links to named sets will provide critical information to existing understanding of these groups. In instances where providing this information may risk sources and methods, limiting assessed attribution to a broad geographic estimate or omitting it entirely may provide a better service. </p>
+<p>[1] <a target="_blank" rel="noopener" href="https://media.defense.gov/2020/May/28/2002306626/-1/-1/0/CSA%20Sandworm%20Actors%20Exploiting%20Vulnerability%20in%20Exim%20Transfer%20Agent%2020200528.pdf">https://media.defense.gov/2020/May/28/2002306626/-1/-1/0/CSA%20Sandworm%20Actors%20Exploiting%20Vulnerability%20in%20Exim%20Transfer%20Agent%2020200528.pdf</a><br>[2] <a target="_blank" rel="noopener" href="https://media.defense.gov/2020/Jul/16/2002457639/-1/-1/0/NCSC_APT29_ADVISORY-QUAD-OFFICIAL-20200709-1810.PDF">https://media.defense.gov/2020/Jul/16/2002457639/-1/-1/0/NCSC_APT29_ADVISORY-QUAD-OFFICIAL-20200709-1810.PDF</a><br>[3] <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Palant%C3%ADr">https://en.wikipedia.org/wiki/Palant%C3%ADr</a></p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://silascutler.com/2020/12/10/LoveAndHateWithJARM/" data-id="ckijatdr90013ahinb40sfcbd" class="article-share-link">Share</a>
+      <a data-url="https://silascutler.com/2021/01/14/KilledInTranslation/" data-id="ckjxixqbu0008psinfcjzevdr" class="article-share-link">Share</a>
       
       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/malware-scanning-jarm/" rel="tag">malware, scanning, jarm</a></li></ul>
-
     </footer>
   </div>
   
@@ -187,7 +162,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://silascutler.com/2020/11/03/Backdooring-a-HID-Reader/" data-id="ckijatdqa0001ahinf2hvbf2g" class="article-share-link">Share</a>
+      <a data-url="https://silascutler.com/2020/11/03/Backdooring-a-HID-Reader/" data-id="ckjxixqbf0001psin43tlcyxj" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/nfc/" rel="tag">nfc</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/rfid/" rel="tag">rfid</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/stunthacks/" rel="tag">stunthacks</a></li></ul>
@@ -243,7 +218,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://silascutler.com/2020/11/03/Fresh-PlugX-October-2019/" data-id="ckijatdqg0003ahin89xk455m" class="article-share-link">Share</a>
+      <a data-url="https://silascutler.com/2020/11/03/Fresh-PlugX-October-2019/" data-id="ckjxixqbr0006psin4iwi4ftk" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/china/" rel="tag">china</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/malware/" rel="tag">malware</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/plugx/" rel="tag">plugx</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/reversing/" rel="tag">reversing</a></li></ul>
@@ -306,7 +281,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://silascutler.com/2020/11/03/Lazarus-obfuscation-in-Feb-2019/" data-id="ckijatdqu0008ahinhld8ds0y" class="article-share-link">Share</a>
+      <a data-url="https://silascutler.com/2020/11/03/Lazarus-obfuscation-in-Feb-2019/" data-id="ckjxixqbv0009psinep9h3k0x" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/dprk/" rel="tag">dprk</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/lazarus/" rel="tag">lazarus</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/malware/" rel="tag">malware</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/reversing/" rel="tag">reversing</a></li></ul>
@@ -442,7 +417,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://silascutler.com/2020/11/03/Finding-the-same-bugs-in-all-the-familiar-places/" data-id="ckijatdqr0006ahin0c8j1oil" class="article-share-link">Share</a>
+      <a data-url="https://silascutler.com/2020/11/03/Finding-the-same-bugs-in-all-the-familiar-places/" data-id="ckjxixqbm0003psin0v2ye2gz" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/bughunting/" rel="tag">bughunting</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/dll/" rel="tag">dll</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/sideloading/" rel="tag">sideloading</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/vulnerability/" rel="tag">vulnerability</a></li></ul>
@@ -481,7 +456,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://silascutler.com/2020/11/02/init/" data-id="ckijatdqv0009ahin82tih2wu" class="article-share-link">Share</a>
+      <a data-url="https://silascutler.com/2020/11/02/init/" data-id="ckjxixqc70013psin2qjp2itp" class="article-share-link">Share</a>
       
       
     </footer>
@@ -504,7 +479,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/bughunting/" rel="tag">bughunting</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/china/" rel="tag">china</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dll/" rel="tag">dll</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dprk/" rel="tag">dprk</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lazarus/" rel="tag">lazarus</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/malware/" rel="tag">malware</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/malware-scanning-jarm/" rel="tag">malware, scanning, jarm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nfc/" rel="tag">nfc</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/plugx/" rel="tag">plugx</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/reversing/" rel="tag">reversing</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/rfid/" rel="tag">rfid</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sideloading/" rel="tag">sideloading</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stunthacks/" rel="tag">stunthacks</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vulnerability/" rel="tag">vulnerability</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/bughunting/" rel="tag">bughunting</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/china/" rel="tag">china</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dll/" rel="tag">dll</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dprk/" rel="tag">dprk</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lazarus/" rel="tag">lazarus</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/malware/" rel="tag">malware</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nfc/" rel="tag">nfc</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/plugx/" rel="tag">plugx</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/reversing/" rel="tag">reversing</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/rfid/" rel="tag">rfid</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sideloading/" rel="tag">sideloading</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stunthacks/" rel="tag">stunthacks</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vulnerability/" rel="tag">vulnerability</a></li></ul>
     </div>
   </div>
 
@@ -514,7 +489,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/bughunting/" style="font-size: 10px;">bughunting</a> <a href="/tags/china/" style="font-size: 10px;">china</a> <a href="/tags/dll/" style="font-size: 10px;">dll</a> <a href="/tags/dprk/" style="font-size: 10px;">dprk</a> <a href="/tags/lazarus/" style="font-size: 10px;">lazarus</a> <a href="/tags/malware/" style="font-size: 20px;">malware</a> <a href="/tags/malware-scanning-jarm/" style="font-size: 10px;">malware, scanning, jarm</a> <a href="/tags/nfc/" style="font-size: 10px;">nfc</a> <a href="/tags/plugx/" style="font-size: 10px;">plugx</a> <a href="/tags/reversing/" style="font-size: 20px;">reversing</a> <a href="/tags/rfid/" style="font-size: 10px;">rfid</a> <a href="/tags/sideloading/" style="font-size: 10px;">sideloading</a> <a href="/tags/stunthacks/" style="font-size: 10px;">stunthacks</a> <a href="/tags/vulnerability/" style="font-size: 10px;">vulnerability</a>
+      <a href="/tags/bughunting/" style="font-size: 10px;">bughunting</a> <a href="/tags/china/" style="font-size: 10px;">china</a> <a href="/tags/dll/" style="font-size: 10px;">dll</a> <a href="/tags/dprk/" style="font-size: 10px;">dprk</a> <a href="/tags/lazarus/" style="font-size: 10px;">lazarus</a> <a href="/tags/malware/" style="font-size: 20px;">malware</a> <a href="/tags/nfc/" style="font-size: 10px;">nfc</a> <a href="/tags/plugx/" style="font-size: 10px;">plugx</a> <a href="/tags/reversing/" style="font-size: 20px;">reversing</a> <a href="/tags/rfid/" style="font-size: 10px;">rfid</a> <a href="/tags/sideloading/" style="font-size: 10px;">sideloading</a> <a href="/tags/stunthacks/" style="font-size: 10px;">stunthacks</a> <a href="/tags/vulnerability/" style="font-size: 10px;">vulnerability</a>
     </div>
   </div>
 
@@ -523,7 +498,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/12/">December 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">November 2020</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">January 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">November 2020</a></li></ul>
     </div>
   </div>
 
@@ -536,7 +511,7 @@
       <ul>
         
           <li>
-            <a href="/2020/12/10/LoveAndHateWithJARM/">Love And Hate With JARM</a>
+            <a href="/2021/01/14/KilledInTranslation/">KilledInTranslation</a>
           </li>
         
           <li>
@@ -567,7 +542,7 @@
   
   <div class="outer">
     <div id="footer-info" class="inner">
-      &copy; 2020 Silas Cutler<br>
+      &copy; 2021 Silas Cutler<br>
       Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
